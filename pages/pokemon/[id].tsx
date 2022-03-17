@@ -1,10 +1,14 @@
+import { useState } from 'react';
+
 import { Button, Card, Container, Grid, Image, Text } from '@nextui-org/react';
 import { GetStaticProps, NextPage, GetStaticPaths } from 'next';
 
-import { pokeApi } from '../../api';
+import confetti from 'canvas-confetti';
 
+import { pokeApi } from '../../api';
 import { Layout } from '../../components/layouts';
 import { Pokemon } from '../../interfaces';
+import { localFavorites } from '../../utils';
 
 
 
@@ -17,10 +21,32 @@ interface Props {
 
 export const PokemonPage: NextPage<Props> = ({ pokemon }) => {
 
+    const [isInFavorites, setIsInFavorites] = useState( localFavorites.existInFavorites(pokemon.id) );
+
     // console.log(pokemon)
+    const onToggleFavorite = () => {
+        localFavorites.toggleFavorite( pokemon.id );
+        setIsInFavorites( !isInFavorites);
+
+        if( isInFavorites ) return;
+        confetti({
+            zIndex: 999,
+            particleCount: 100,
+            spread: 160,
+            angle: -100,
+            origin: {
+                x: 1,
+                y: 0,
+            }
+        })
+
+    }
+
+
+    
 
     return (
-        <Layout title='Algun Pokemon'>
+        <Layout title={ pokemon.name }>
             <Grid.Container css={{ marignTop: '5px'}} gap={2} >
                 <Grid xs={12} sm={4}>
                     <Card hoverable css={{ padding: '3opx' }}>
@@ -42,9 +68,12 @@ export const PokemonPage: NextPage<Props> = ({ pokemon }) => {
 
                             <Button
                                 color="gradient"
-                                ghost
+                                ghost={ !isInFavorites }
+                                onClick={ onToggleFavorite }
                             >
-                                Guardar en Favoritos
+                                {
+                                    isInFavorites ? 'En Favoritos' : 'Guardar en favoritos'
+                                }
                             </Button>
                         </Card.Header>
 
