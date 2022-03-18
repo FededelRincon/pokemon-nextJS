@@ -1,15 +1,13 @@
-import { useState } from 'react';
-
 import { Button, Card, Container, Grid, Image, Text } from '@nextui-org/react';
-import { GetStaticProps, NextPage, GetStaticPaths } from 'next';
-
 import confetti from 'canvas-confetti';
+import { GetStaticProps, GetStaticPaths, NextPage } from 'next';
 
+import { useState } from 'react';
 import { pokeApi } from '../../api';
 import { Layout } from '../../components/layouts';
-import { Pokemon } from '../../interfaces';
-import { localFavorites } from '../../utils';
 
+import { Pokemon, PokemonListResponse } from '../../interfaces';
+import { localFavorites } from '../../utils';
 
 
 interface Props {
@@ -17,9 +15,7 @@ interface Props {
 }
 
 
-
-
-export const PokemonPage: NextPage<Props> = ({ pokemon }) => {
+export const PokemonByNamePage: NextPage<Props> = ({ pokemon }) => {
 
     const [isInFavorites, setIsInFavorites] = useState( localFavorites.existInFavorites(pokemon.id) );
 
@@ -115,32 +111,36 @@ export const PokemonPage: NextPage<Props> = ({ pokemon }) => {
 };
 
 
-
 // You should use getStaticPaths if you’re statically pre-rendering pages that use dynamic routes
-export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
-    // crea un array de 0 a 151, 
-    const pokemons151 = [...Array(151)].map(( value, index) => `${ index + 1 }` )
+export const getStaticPaths: GetStaticPaths = async (ctx) => {
+    const { data } = await pokeApi.get<PokemonListResponse>('/pokemon?limit=151') 
+
+    // crea un array de 0 a 151, con todos los nombres(arreglo de nombres)
+    const pokemonNames: string[] = data.results.map( pokemon => pokemon.name );
 
     return {
-        // paths: [
-        //     {
-        //         params: { id: '1' },
-        //     },
-        // ],
-        paths: pokemons151.map( (id) => ({
-            params: { id }
+        paths: pokemonNames.map( (name) => ({
+            params: { name }    
         })),
         fallback: false
     }
+    //esta la generacion de forma dinamica de todos los posibles argumentos que el getStaticProps puede recibir
+    //son pikachu, bolbasaur, charmander, etc.... son 151
 }
+
+
+// You should use getStaticProps when:
+//- The data required to render the page is available at build time ahead of a user’s request.
+//- The data comes from a headless CMS.
+//- The data can be publicly cached (not user-specific).
+//- The page must be pre-rendered (for SEO) and be very fast — getStaticProps generates HTML and JSON files, both of which can be cached by a CDN for performance.
 
 export const getStaticProps: GetStaticProps = async (ctx) => {
 
-    const { id } = ctx.params as { id: string };
+    const { name } = ctx.params as { name: string };
     
-    const { data } = await pokeApi.get<Pokemon>(`/pokemon/${ id }`);
-
+    const { data } = await pokeApi.get<Pokemon>(`/pokemon/${ name }`);
 
     const pokemon = {
         id: data.id,
@@ -156,4 +156,7 @@ export const getStaticProps: GetStaticProps = async (ctx) => {
     }
 }
 
-export default PokemonPage;
+
+
+
+export default PokemonByNamePage;
