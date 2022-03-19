@@ -123,7 +123,8 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
         paths: pokemonNames.map( (name) => ({
             params: { name }    
         })),
-        fallback: false
+        // fallback: false
+        fallback: 'blocking'
     }
     //esta la generacion de forma dinamica de todos los posibles argumentos que el getStaticProps puede recibir
     //son pikachu, bolbasaur, charmander, etc.... son 151
@@ -139,9 +140,19 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 export const getStaticProps: GetStaticProps = async (ctx) => {
 
     const { name } = ctx.params as { name: string };
+
     
     const pokemon = await getPokemonInfo( name )
+    // const pokemon = await getPokemonInfo( name.toLocaleLowerCase() )
 
+    if ( !pokemon ) {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
 
     return {
         props: {
